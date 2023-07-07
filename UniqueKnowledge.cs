@@ -19,6 +19,10 @@ namespace UniqueKnowledge
         public override void OnInitializeMelon()
 		{
 			Instance = this;
+
+			uConsole.RegisterCommand("uknowledge_clear", new Action(() => {
+				Data.ClearData();
+			}));
 		}
 
     }
@@ -37,6 +41,7 @@ namespace UniqueKnowledge
 			foreach (var kvp in researched)
 			{
 				sb.AppendFormat("#{0}:{1}!", kvp.Key, kvp.Value);
+				// MelonLogger.Msg($"SaveData: {sb.ToString()}");
 				Save(sb.ToString());
 			}
 		}
@@ -48,6 +53,22 @@ namespace UniqueKnowledge
 			if (string.IsNullOrWhiteSpace(record)) return;
 			MelonLogger.Msg(record);
 
+			var validationCursor = 0;
+			while ((validationCursor = record.IndexOf('#', validationCursor)) != -1)
+			{
+				var nextA = record.IndexOf('#', validationCursor + 1);
+				var nextB = record.IndexOf(':', validationCursor);
+				var nextC = record.IndexOf('!', validationCursor);
+				
+				if (nextB == -1 || nextC == -1 || nextC < nextB || (nextA != -1 && (nextA < nextB || nextA < nextC)))
+				{
+					MelonLogger.Error($"Invalid save data, will not load researched hours: {record} (debug info: { nextA }/{ nextB }/{ nextC })");
+					return;
+				}
+
+				validationCursor += 1;
+			}
+
 			var matches = Regex.Matches(record, "#(.+?):(.+?)!");
 			if (matches == null || matches.Count == 0) return;
 			for (int i = 0; i < matches.Count; i++)
@@ -56,8 +77,8 @@ namespace UniqueKnowledge
 				var name = m.Groups[1];
 				var hourStr = m.Groups[2];
 				// MelonLogger.Msg($"LoadData: {m.Value} -> {name.Value} : {hourStr.Value}");
-				if (string.IsNullOrWhiteSpace(name?.Text) || !float.TryParse(hourStr?.Text, out float hours)) continue;
-				researched.Add(name.Text, hours);
+				if (string.IsNullOrWhiteSpace(name.Value) || !float.TryParse(hourStr.Value, out float hours)) continue;
+				researched.Add(name.Value, hours);
 			}
  		}
 
@@ -173,7 +194,7 @@ namespace UniqueKnowledge
 
 
     [HarmonyPatch(nameof(SaveGameSystem), nameof(SaveGameSystem.RestoreGlobalData))]
-	internal static class RestoreGlobalData // Workaround for ModData "autosave" issue
+	internal static class RestoreGlobalData
 	{
 		internal static void Postfix (SaveGameSystem __instance)
 		{
@@ -182,7 +203,7 @@ namespace UniqueKnowledge
 	}
 
     [HarmonyPatch(nameof(SaveGameSystem), nameof(SaveGameSystem.SaveGlobalData))]
-	internal static class SaveGlobalData // Workaround for ModData "autosave" issue
+	internal static class SaveGlobalData
 	{
 		internal static void Postfix (SaveGameSystem __instance)
 		{
