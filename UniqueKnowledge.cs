@@ -1,6 +1,4 @@
-﻿
-using Moment;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2Cpp;
 using MelonLoader;
 using ModData;
@@ -111,7 +109,7 @@ namespace UniqueKnowledge
 		}
     }
 
-    [HarmonyPatch(nameof(ResearchItem), nameof(ResearchItem.Read))]
+    [HarmonyPatch(typeof(ResearchItem), nameof(ResearchItem.Read))]
 	internal static class Read
 	{
 		internal static void Postfix (ResearchItem __instance)
@@ -132,7 +130,7 @@ namespace UniqueKnowledge
 		}
 	}
 
-    [HarmonyPatch(nameof(ResearchItem), nameof(ResearchItem.Deserialize))]
+    [HarmonyPatch(typeof(ResearchItem), nameof(ResearchItem.Deserialize))]
 	internal static class Deserialize
 	{
 		internal static void Postfix (ResearchItem __instance)
@@ -154,7 +152,7 @@ namespace UniqueKnowledge
 		}
 	}
 
-    [HarmonyPatch(nameof(Panel_Inventory_Examine), nameof(Panel_Inventory_Examine.OnRead))]
+    [HarmonyPatch(typeof(Panel_Inventory_Examine), nameof(Panel_Inventory_Examine.OnRead))]
 	internal static class OnRead
 	{
 		internal static void Prefix (Panel_Inventory_Examine __instance)
@@ -180,7 +178,7 @@ namespace UniqueKnowledge
 		}
 	}
 
-    [HarmonyPatch(nameof(Inventory), nameof(Inventory.AddGear))]
+    [HarmonyPatch(typeof(Inventory), nameof(Inventory.AddGear))]
 	internal static class AddGear
 	{
 		internal static void Postfix (Inventory __instance, GearItem gi)
@@ -193,25 +191,25 @@ namespace UniqueKnowledge
 	}
 
 
-    [HarmonyPatch(nameof(SaveGameSystem), nameof(SaveGameSystem.RestoreGlobalData))]
-	internal static class RestoreGlobalData
+    [HarmonyPatch(typeof(GameManager), nameof(GameManager.LoadSaveGameSlot), new Type[] { typeof(SaveSlotInfo) })]
+	internal static class LoadSaveGameSlot
 	{
-		internal static void Postfix (SaveGameSystem __instance)
+		internal static void Postfix ()
 		{
 			UniqueKnowledge.Instance.Data.LoadData();
 		}
 	}
 
-    [HarmonyPatch(nameof(SaveGameSystem), nameof(SaveGameSystem.SaveGlobalData))]
-	internal static class SaveGlobalData
+    [HarmonyPatch(typeof(SaveGameSlots), nameof(SaveGameSlots.WriteSlotToDisk), new Type[] { typeof(SlotData), typeof(SaveGameSlots.Timestamp) })]
+		internal static class SaveGlobalData
 	{
-		internal static void Postfix (SaveGameSystem __instance)
+		internal static void Prefix ()
 		{
 			UniqueKnowledge.Instance.Data.SaveData();
 		}
 	}
 
-    [HarmonyPatch(nameof(GameManager), nameof(GameManager.HandlePlayerDeath))]
+    [HarmonyPatch(typeof(GameManager), nameof(GameManager.HandlePlayerDeath))]
 	internal static class HandlePlayerDeath // Workaround for ModData "autosave" issue
 	{
 		internal static void Postfix (GameManager __instance)
